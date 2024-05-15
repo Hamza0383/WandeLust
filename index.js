@@ -6,6 +6,9 @@ const Listing = require("./models/listing");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
+const wrapAsync = require("./utils/wrapAsync.js");
+const ExpressError = require("./utils/ExpressError.js");
+const { listingSchema } = require("./schema.js");
 app.use(methodOverride("_method"));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
@@ -18,40 +21,79 @@ main()
 async function main() {
   mongoose.connect(MONGO_DB);
 }
+const validateListing = (req, res, next) => {
+  let { error } = listingSchema.validate(req.body);
+  let errMsg = error.details.map((el) => el.message).join(",");
+  if (error) {
+    throw new ExpressError(400, errMsg);
+  } else {
+    next();
+  }
+};
 app.get("/", (req, res) => {
   res.send("App is Working");
 });
-app.get("/listing", async (req, res) => {
-  let allListing = await Listing.find({});
-  res.render("listing/index.ejs", { allListing });
-});
+app.get(
+  "/listing",
+  wrapAsync(async (req, res) => {
+    let allListing = await Listing.find({});
+    res.render("listing/index.ejs", { allListing });
+  })
+);
 app.get("/listing/new", (req, res) => {
   res.render("listing/new.ejs");
 });
-app.get("/listing/:id", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listing/show.ejs", { listing });
+app.get(
+  "/listing/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const listing = await Listing.findById(id);
+    res.render("listing/show.ejs", { listing });
+  })
+);
+app.post(
+  "/listing",
+  validateListing,
+  wrapAsync(async (req, res) => {
+    let listing = new Listing(req.body.listing);
+    await listing.save();
+    res.redirect("/listing");
+  })
+);
+app.get(
+  "/listing/:id/edit",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const listing = await Listing.findById(id);
+    res.render("listing/edit.ejs", { listing });
+  })
+);
+app.put(
+  "/listing/:id",
+  validateListing,
+  wrapAsync(async (req, res, next) => {
+    if (!req.body.listing) {
+      throw new Error(400, "Send valid Data for Listing");
+    }
+    let { id } = req.params;
+    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+    res.redirect(`/listing/${id}`);
+  })
+);
+app.delete(
+  "/listing/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    await Listing.findByIdAndDelete(id);
+    res.redirect("/listing");
+  })
+);
+app.all("*", (req, res, next) => {
+  next(new ExpressError(404, "Page Not Found!"));
 });
-app.post("/listing", async (req, res) => {
-  let listing = new Listing(req.body.listing);
-  await listing.save();
-  res.redirect("/listing");
-});
-app.get("/listing/:id/edit", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listing/edit.ejs", { listing });
-});
-app.put("/listing/:id", async (req, res) => {
-  let { id } = req.params;
-  await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-  res.redirect(`/listing/${id}`);
-});
-app.delete("/listing/:id", async (req, res) => {
-  let { id } = req.params;
-  await Listing.findByIdAndDelete(id);
-  res.redirect("/listing");
+app.use((err, req, res, next) => {
+  let { statusCode = 500, message = "Something went Wrong" } = err;
+  res.status(statusCode).render("error.ejs", { message });
 });
 app.listen(8080, () => {
   console.log("app is Listening");

@@ -2,7 +2,7 @@
 <body>
   <h3>Create New Listing</h3>
 
-  <form method="POST" action="/listing">
+  <form method="POST" action="/listing" class="needs-validation" novalidate>
     <div class="mb-3">
       <label for="title" class="form-label">Title</label>
       <input
@@ -10,7 +10,10 @@
         name="listing[title]"
         placeholder="Enter your title"
         class="form-control"
+        required
       />
+      <div class="valid-feedback">Looks Good.</div>
+      <div class="invalid-feedback">Please Enter a valid Title.</div>
     </div>
     <div class="mb-3">
       <label for="description" class="form-label">Description</label>
@@ -18,7 +21,10 @@
         name="listing[description]"
         placeholder="Enter your description here"
         class="form-control"
+        required
       ></textarea>
+      <div class="valid-feedback">Looks Good.</div>
+      <div class="invalid-feedback">Please Enter a valid Description.</div>
     </div>
     <div class="mb-3">
       <label for="image" class="form-label">Image Link</label>
@@ -32,11 +38,13 @@
     <div class="mb-3">
       <label for="price" class="form-label">Price</label>
       <input
-        type="number"
+        type="text"
         name="listing[price]"
         placeholder="Enter your price"
         class="form-control"
+        required
       />
+      <div class="invalid-feedback">Please Enter a valid Price.</div>
     </div>
     <div class="mb-3">
       <label for="country" class="form-label">Country</label>
@@ -45,7 +53,9 @@
         name="listing[country]"
         placeholder="Enter your country"
         class="form-control"
+        required
       />
+      <div class="invalid-feedback">Please Enter a valid Country name.</div>
     </div>
     <div class="mb-3">
       <label for="location" class="form-label">Location</label>
@@ -54,7 +64,9 @@
         name="listing[location]"
         placeholder="Enter your location"
         class="form-control"
+        required
       />
+      <div class="invalid-feedback">Please Enter a valid Location.</div>
     </div>
     <br /><br />
     <button class="btn btn-dark">Add</button>
