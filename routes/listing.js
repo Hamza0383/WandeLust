@@ -4,6 +4,7 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 const { listingSchema } = require("../schema.js");
 const Listing = require("../models/listing");
+const { isLoggedIn } = require("../middleware.js");
 const validateListing = (req, res, next) => {
   let { error } = listingSchema.validate(req.body);
   let errMsg = error.details.map((el) => el.message).join(",");
@@ -20,7 +21,7 @@ router.get(
     res.render("listing/index.ejs", { allListing });
   })
 );
-router.get("/new", (req, res) => {
+router.get("/new", isLoggedIn, (req, res) => {
   res.render("listing/new.ejs");
 });
 router.get(
@@ -33,6 +34,7 @@ router.get(
 );
 router.post(
   "/",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let listing = new Listing(req.body.listing);
     await listing.save();
@@ -42,6 +44,7 @@ router.post(
 );
 router.get(
   "/:id/edit",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     const listing = await Listing.findById(id);
@@ -50,6 +53,7 @@ router.get(
 );
 router.put(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res, next) => {
     if (!req.body.listing) {
       throw new Error(400, "Send valid Data for Listing");
@@ -62,6 +66,7 @@ router.put(
 );
 router.delete(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);
